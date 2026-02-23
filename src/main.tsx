@@ -1,0 +1,22 @@
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { HashRouter } from 'react-router-dom'
+import { TaskProvider } from './context/TaskContext'
+import { ThemeProvider } from './context/ThemeContext'
+import { ToastProvider } from './context/ToastContext'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <HashRouter>
+      <ThemeProvider>
+        <ToastProvider>
+          <TaskProvider>
+            <App />
+          </TaskProvider>
+        </ToastProvider>
+      </ThemeProvider>
+    </HashRouter>
+  </React.StrictMode>,
+)
