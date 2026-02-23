@@ -1,10 +1,12 @@
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTasks } from '../context/TaskContext'
 import { useToast } from '../context/ToastContext'
+import { useNotifications } from '../hooks/useNotifications'
 import TaskRow from '../components/TaskRow'
 import Modal from '../components/Modal'
-import { getDueStatus, Task, exportTasksToJSON, exportTasksToCSV, downloadFile, getSubtaskProgress, getDueStatusColor, getDueStatusLabel, CATEGORY_COLORS, TASK_CATEGORIES, TaskCategory } from '../types/Task'
+import Stats from '../components/Stats'
+import { getDueStatus, Task, exportTasksToJSON, exportTasksToCSV, downloadFile, getSubtaskProgress, getDueStatusColor, getDueStatusLabel, CATEGORY_COLORS, TASK_CATEGORIES, TaskCategory, RecurrenceType, getRecurrenceLabel } from '../types/Task'
 
 type FilterType = 'all' | 'active' | 'completed' | 'time-sensitive' | 'highlighted'
 
@@ -112,9 +114,13 @@ function TaskList() {
   const {
     tasks, addTask, toggleDone, updateTask, deleteTask, deleteTasks,
     restoreTask, restoreTasks, importTasks, clearAllTasks, bulkUpdateTasks,
-    addSubtask, toggleSubtask, deleteSubtask
+    addSubtask, toggleSubtask, deleteSubtask, reorderTasks
   } = useTasks()
   const { showToast } = useToast()
+  const { notificationPermission, requestPermission } = useNotifications(tasks, updateTask)
+  const [showStats, setShowStats] = useState(true)
+  const [quickAddRecurrence, setQuickAddRecurrence] = useState<RecurrenceType>('none')
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const navigate = useNavigate()
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -366,14 +372,44 @@ function TaskList() {
       dueDate: null,
       subtasks: [],
       highlighted: false,
-      categories: quickAddCategories
+      categories: quickAddCategories,
+      recurrence: quickAddRecurrence
     })
     setQuickAddTask('')
     setQuickAddPriority(3)
     setQuickAddCategories([])
+    setQuickAddRecurrence('none')
     quickAddInputRef.current?.focus()
     showToast('Task added', 'success')
   }
+
+  // Drag and drop handlers
+  const handleDragStart = useCallback((e: React.DragEvent, taskId: string) => {
+    setDraggedTaskId(taskId)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', taskId)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent, targetTaskId: string) => {
+    e.preventDefault()
+    if (!draggedTaskId || draggedTaskId === targetTaskId) return
+
+    const targetIndex = filteredTasks.findIndex(t => t.id === targetTaskId)
+    if (targetIndex !== -1) {
+      reorderTasks(draggedTaskId, targetIndex)
+      showToast('Task reordered', 'success')
+    }
+    setDraggedTaskId(null)
+  }, [draggedTaskId, filteredTasks, reorderTasks, showToast])
+
+  const handleDragEnd = useCallback(() => {
+    setDraggedTaskId(null)
+  }, [])
 
   const handleOpenNotesModal = (task: Task) => {
     setNotesModalTask(task)
@@ -548,6 +584,40 @@ function TaskList() {
           </p>
         </div>
         <div className="flex gap-2">
+          {/* Notification Permission Button */}
+          {notificationPermission !== 'granted' && (
+            <button
+              onClick={requestPermission}
+              className="inline-flex items-center px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+              title="Enable notifications for due dates"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </button>
+          )}
+          {notificationPermission === 'granted' && (
+            <span className="inline-flex items-center px-3 py-2 text-green-600 dark:text-green-400" title="Notifications enabled">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+            </span>
+          )}
+
+          {/* Stats Toggle */}
+          <button
+            onClick={() => setShowStats(!showStats)}
+            className={`inline-flex items-center px-3 py-2 rounded-md transition-colors ${
+              showStats
+                ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300'
+                : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+            title="Toggle statistics"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </button>
           {/* Export Menu */}
           <div className="relative" ref={exportMenuRef}>
             <button
@@ -782,6 +852,29 @@ function TaskList() {
                 </svg>
               </button>
             )}
+            </div>
+          </div>
+          {/* Recurrence Picker */}
+          <div className="flex flex-col">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 ml-1">Repeat</span>
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-md p-1">
+              {(['none', 'daily', 'weekly', 'monthly'] as RecurrenceType[]).map(rec => (
+                <button
+                  key={rec}
+                  type="button"
+                  onClick={() => setQuickAddRecurrence(rec)}
+                  className={`px-2 h-8 rounded text-xs font-medium transition-colors ${
+                    quickAddRecurrence === rec
+                      ? rec === 'none'
+                        ? 'bg-gray-500 text-white'
+                        : 'bg-indigo-500 text-white'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  title={rec === 'none' ? 'No repeat' : `Repeat ${rec}`}
+                >
+                  {rec === 'none' ? '-' : rec.charAt(0).toUpperCase()}
+                </button>
+              ))}
             </div>
           </div>
           <div className="relative flex-1 min-w-[200px]">
@@ -1053,6 +1146,9 @@ function TaskList() {
         </div>
       )}
 
+      {/* Stats Panel */}
+      {showStats && <Stats tasks={tasks} />}
+
       {/* Progress Indicator */}
       <div className="flex items-center justify-between mb-4 p-3 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg border border-green-200 dark:border-green-800">
         <div className="flex items-center gap-3">
@@ -1176,6 +1272,11 @@ function TaskList() {
                       selectionMode={selectionMode}
                       onOpenNotes={handleOpenNotesModal}
                       onToggleHighlight={handleToggleHighlight}
+                      onDragStart={handleDragStart}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                      onDragEnd={handleDragEnd}
+                      isDragging={draggedTaskId === task.id}
                     />
                   ))}
                 </tbody>

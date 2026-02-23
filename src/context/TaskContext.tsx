@@ -1,7 +1,7 @@
 import { createContext, useContext, useCallback, useMemo, ReactNode } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { useLocalStorage } from '../hooks/useLocalStorage'
-import { Task, TaskFormData, Subtask } from '../types/Task'
+import { Task, TaskFormData, Subtask, getNextDueDate } from '../types/Task'
 
 interface TaskContextType {
   tasks: Task[]
@@ -19,6 +19,7 @@ interface TaskContextType {
   toggleSubtask: (taskId: string, subtaskId: string) => void
   importTasks: (data: string) => number
   clearAllTasks: () => Task[]
+  reorderTasks: (taskId: string, newIndex: number) => void
 }
 
 const TaskContext = createContext<TaskContextType | null>(null)
@@ -37,14 +38,17 @@ function mapPriority(priority: string): 1 | 2 | 3 | 4 | 5 {
   return num as 1 | 2 | 3 | 4 | 5
 }
 
-// Migrate old tasks that don't have dueDate, subtasks, highlighted, or categories
-function migrateTask(task: Partial<Task> & { id: string }): Task {
+// Migrate old tasks that don't have dueDate, subtasks, highlighted, categories, recurrence, or sortOrder
+function migrateTask(task: Partial<Task> & { id: string }, index: number): Task {
   return {
     ...task,
     dueDate: task.dueDate ?? null,
     subtasks: task.subtasks ?? [],
     highlighted: task.highlighted ?? false,
-    categories: task.categories ?? []
+    categories: task.categories ?? [],
+    recurrence: task.recurrence ?? 'none',
+    sortOrder: task.sortOrder ?? index,
+    lastNotified: task.lastNotified ?? null
   } as Task
 }
 
@@ -53,7 +57,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
 
   // Migrate tasks on load
   const migratedTasks = useMemo(() => {
-    return tasks.map(migrateTask)
+    return tasks.map((task, index) => migrateTask(task, index))
   }, [tasks])
 
   const sortedTasks = useMemo(() => {
@@ -123,17 +127,47 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [setTasks])
 
   const toggleDone = useCallback((id: string) => {
-    setTasks(prev => prev.map(task => {
-      if (task.id !== id) return task
+    setTasks(prev => {
+      const taskToToggle = prev.find(t => t.id === id)
+      if (!taskToToggle) return prev
 
-      const done = !task.done
-      return {
-        ...task,
-        done,
-        completedDate: done ? new Date().toISOString() : null,
-        status: done ? 'completed' : 'pending'
+      const done = !taskToToggle.done
+
+      // If completing a recurring task, create a new instance
+      if (done && taskToToggle.recurrence && taskToToggle.recurrence !== 'none' && taskToToggle.dueDate) {
+        const nextDueDate = getNextDueDate(taskToToggle.dueDate, taskToToggle.recurrence)
+        const newTask: Task = {
+          ...taskToToggle,
+          id: uuidv4(),
+          done: false,
+          completedDate: null,
+          status: 'pending',
+          dueDate: nextDueDate,
+          createdAt: new Date().toISOString(),
+          subtasks: taskToToggle.subtasks?.map(s => ({ ...s, done: false })) || []
+        }
+
+        return prev.map(task => {
+          if (task.id !== id) return task
+          return {
+            ...task,
+            done: true,
+            completedDate: new Date().toISOString(),
+            status: 'completed' as const
+          }
+        }).concat(newTask)
       }
-    }))
+
+      return prev.map(task => {
+        if (task.id !== id) return task
+        return {
+          ...task,
+          done,
+          completedDate: done ? new Date().toISOString() : null,
+          status: done ? 'completed' : 'pending'
+        }
+      })
+    })
   }, [setTasks])
 
   const bulkUpdateTasks = useCallback((ids: string[], updates: Partial<Task>) => {
@@ -247,6 +281,23 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     return deletedTasks
   }, [setTasks])
 
+  const reorderTasks = useCallback((taskId: string, newIndex: number) => {
+    setTasks(prev => {
+      const taskIndex = prev.findIndex(t => t.id === taskId)
+      if (taskIndex === -1) return prev
+
+      const newTasks = [...prev]
+      const [removed] = newTasks.splice(taskIndex, 1)
+      newTasks.splice(newIndex, 0, removed)
+
+      // Update sortOrder for all tasks
+      return newTasks.map((task, index) => ({
+        ...task,
+        sortOrder: index
+      }))
+    })
+  }, [setTasks])
+
   return (
     <TaskContext.Provider value={{
       tasks: sortedTasks,
@@ -263,7 +314,8 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       deleteSubtask,
       toggleSubtask,
       importTasks,
-      clearAllTasks
+      clearAllTasks,
+      reorderTasks
     }}>
       {children}
     </TaskContext.Provider>

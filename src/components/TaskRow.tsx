@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Task, Subtask, getDueStatus, getDueStatusColor, getDueStatusLabel, getSubtaskProgress, CATEGORY_COLORS, TaskCategory, TASK_CATEGORIES } from '../types/Task'
+import { Task, Subtask, getDueStatus, getDueStatusColor, getDueStatusLabel, getSubtaskProgress, CATEGORY_COLORS, TaskCategory, TASK_CATEGORIES, getRecurrenceLabel } from '../types/Task'
 
 // Format notes with basic markdown-like syntax
 function formatNotesPreview(notes: string): JSX.Element[] {
@@ -73,6 +73,12 @@ interface TaskRowProps {
   selectionMode?: boolean
   onOpenNotes?: (task: Task) => void
   onToggleHighlight?: (taskId: string) => void
+  // Drag and drop
+  onDragStart?: (e: React.DragEvent, taskId: string) => void
+  onDragOver?: (e: React.DragEvent) => void
+  onDrop?: (e: React.DragEvent, taskId: string) => void
+  onDragEnd?: () => void
+  isDragging?: boolean
 }
 
 const priorityColors: Record<number, string> = {
@@ -101,7 +107,12 @@ function TaskRow({
   onSelect,
   selectionMode,
   onOpenNotes,
-  onToggleHighlight
+  onToggleHighlight,
+  onDragStart,
+  onDragOver,
+  onDrop,
+  onDragEnd,
+  isDragging
 }: TaskRowProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [showSubtasks, setShowSubtasks] = useState(false)
@@ -285,7 +296,13 @@ function TaskRow({
 
   return (
     <>
-      <tr className={`border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${task.done ? 'opacity-60' : ''} ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${task.highlighted ? 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-l-yellow-400' : ''} ${isOverdue ? 'bg-red-50 dark:bg-red-900/20 border-l-4 border-l-red-500' : ''} ${isDueToday && !isOverdue && !task.highlighted ? 'bg-orange-50 dark:bg-orange-900/10 border-l-4 border-l-orange-400' : ''}`}>
+      <tr
+        draggable={!selectionMode}
+        onDragStart={(e) => onDragStart?.(e, task.id)}
+        onDragOver={onDragOver}
+        onDrop={(e) => onDrop?.(e, task.id)}
+        onDragEnd={onDragEnd}
+        className={`border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-grab active:cursor-grabbing ${task.done ? 'opacity-60' : ''} ${isSelected ? 'bg-blue-50 dark:bg-blue-900/20' : ''} ${task.highlighted ? 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-l-yellow-400' : ''} ${isOverdue ? 'bg-red-50 dark:bg-red-900/20 border-l-4 border-l-red-500' : ''} ${isDueToday && !isOverdue && !task.highlighted ? 'bg-orange-50 dark:bg-orange-900/10 border-l-4 border-l-orange-400' : ''} ${isDragging ? 'opacity-50 bg-blue-100 dark:bg-blue-900/30' : ''}`}>
         {selectionMode && (
           <td className="px-2 py-3">
             <input
@@ -309,6 +326,14 @@ function TaskRow({
         <td className={`px-4 py-3 text-gray-900 dark:text-white ${task.done ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
           <div className="flex items-center gap-2 flex-wrap">
             <span>{task.task}</span>
+            {task.recurrence && task.recurrence !== 'none' && (
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" title={`Repeats ${task.recurrence}`}>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {getRecurrenceLabel(task.recurrence)}
+              </span>
+            )}
             {task.categories && task.categories.length > 0 && (
               <div className="flex gap-1 flex-wrap">
                 {task.categories.map(cat => (

@@ -15,6 +15,8 @@ export const CATEGORY_COLORS: Record<TaskCategory, string> = {
   'NIPR': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
 }
 
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly'
+
 export interface Task {
   id: string
   priority: 1 | 2 | 3 | 4 | 5
@@ -28,6 +30,9 @@ export interface Task {
   subtasks?: Subtask[]
   highlighted?: boolean
   categories?: TaskCategory[]
+  recurrence?: RecurrenceType
+  sortOrder?: number
+  lastNotified?: string | null
 }
 
 export type TaskFormData = Omit<Task, 'id' | 'createdAt' | 'completedDate'>
@@ -118,4 +123,33 @@ export function downloadFile(content: string, filename: string, mimeType: string
   link.click()
   document.body.removeChild(link)
   URL.revokeObjectURL(url)
+}
+
+export function getNextDueDate(currentDueDate: string | null, recurrence: RecurrenceType): string | null {
+  if (!currentDueDate || recurrence === 'none') return null
+
+  const date = new Date(currentDueDate)
+
+  switch (recurrence) {
+    case 'daily':
+      date.setDate(date.getDate() + 1)
+      break
+    case 'weekly':
+      date.setDate(date.getDate() + 7)
+      break
+    case 'monthly':
+      date.setMonth(date.getMonth() + 1)
+      break
+  }
+
+  return date.toISOString().split('T')[0]
+}
+
+export function getRecurrenceLabel(recurrence: RecurrenceType): string {
+  switch (recurrence) {
+    case 'daily': return 'Daily'
+    case 'weekly': return 'Weekly'
+    case 'monthly': return 'Monthly'
+    default: return ''
+  }
 }
