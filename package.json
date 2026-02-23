@@ -1,6 +1,6 @@
 {
   "name": "tr-tracker",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "Lightweight task tracker with local storage",
   "main": "dist-electron/main.js",
   "author": "Sergio F. Rodriguez: your daddy!",
