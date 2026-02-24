@@ -8,6 +8,11 @@ All notable changes to Task Tracker will be documented in this file.
 - **Bundle Size Optimization**: Reduced JS bundle from 77KB to 72KB gzipped (~7% reduction)
   - Replaced `uuid` package with native `crypto.randomUUID()`
   - Replaced `react-router-dom` (~15KB) with `wouter` (~1.5KB)
+- **Reorganized Filter Layout**:
+  - Search input now on same row as status tabs (All/Active/Completed/Urgent/Starred)
+  - Priority, category, and date filters on dedicated row
+  - Quick add moved closer to task list
+  - Filter buttons separated from quick add pickers for clearer UX
 - Removed dependencies: `uuid`, `@types/uuid`, `react-router-dom`
 - Added dependency: `wouter` (lightweight router with hash support)
 
