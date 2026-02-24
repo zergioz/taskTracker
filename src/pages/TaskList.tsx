@@ -697,212 +697,9 @@ function TaskList() {
         </div>
       )}
 
-      {/* Bulk Actions Toolbar */}
-      {selectionMode && selectedTasks.size > 0 && (
-        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-            {selectedTasks.size} selected
-          </span>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={handleBulkMarkDone}
-              className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              Mark Done
-            </button>
-            <button
-              onClick={handleBulkMarkUndone}
-              className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
-            >
-              Mark Undone
-            </button>
-            <select
-              onChange={(e) => handleBulkSetPriority(Number(e.target.value) as 1|2|3|4|5)}
-              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-              defaultValue=""
-            >
-              <option value="" disabled>Set Priority</option>
-              <option value="1">P1 - Highest</option>
-              <option value="2">P2 - High</option>
-              <option value="3">P3 - Medium</option>
-              <option value="4">P4 - Low</option>
-              <option value="5">P5 - Lowest</option>
-            </select>
-            <button
-              onClick={handleBulkDelete}
-              className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              Delete
-            </button>
-          </div>
-          <button
-            onClick={() => { setSelectionMode(false); setSelectedTasks(new Set()) }}
-            className="ml-auto text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
-          >
-            Cancel
-          </button>
-        </div>
-      )}
-
-      {/* Quick Add Input */}
-      <form onSubmit={handleQuickAdd} className="mb-4">
-        <div className="flex gap-2 flex-wrap items-end">
-          {/* Priority Picker / Filter */}
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 ml-1">Priority</span>
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-md p-1">
-            {([1, 2, 3, 4, 5] as const).map(p => {
-              const isFilterActive = filterPriority === p
-              const isQuickAddActive = quickAddPriority === p
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => {
-                    if (isFilterActive) {
-                      // Toggle off filter
-                      setFilterPriority(null)
-                      setQuickAddPriority(3)
-                    } else {
-                      // Set both filter and quick add
-                      setFilterPriority(p)
-                      setQuickAddPriority(p)
-                    }
-                  }}
-                  className={`w-8 h-8 rounded text-xs font-bold transition-colors ${
-                    isFilterActive || isQuickAddActive
-                      ? p === 1 ? 'bg-red-500 text-white'
-                        : p === 2 ? 'bg-orange-500 text-white'
-                        : p === 3 ? 'bg-yellow-500 text-white'
-                        : p === 4 ? 'bg-blue-500 text-white'
-                        : 'bg-gray-500 text-white'
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                  title={`Priority ${p} - Click to filter`}
-                >
-                  P{p}
-                </button>
-              )
-            })}
-            {filterPriority !== null && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFilterPriority(null)
-                  setQuickAddPriority(3)
-                }}
-                className="ml-1 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                title="Clear priority filter"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-            </div>
-          </div>
-          {/* Category Picker / Filter */}
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 ml-1">Category</span>
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-md p-1">
-            {TASK_CATEGORIES.map(cat => {
-              const isSelectedForAdd = quickAddCategories.includes(cat)
-              const isSelectedForFilter = filterCategories.includes(cat)
-              const isSelected = isSelectedForAdd || isSelectedForFilter
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => {
-                    // Toggle both quick add and filter
-                    setQuickAddCategories(prev =>
-                      isSelectedForAdd
-                        ? prev.filter(c => c !== cat)
-                        : [...prev, cat]
-                    )
-                    setFilterCategories(prev =>
-                      isSelectedForFilter
-                        ? prev.filter(c => c !== cat)
-                        : [...prev, cat]
-                    )
-                  }}
-                  className={`px-2 h-8 rounded text-xs font-medium transition-colors ${
-                    isSelected
-                      ? CATEGORY_COLORS[cat]
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                  title={`${cat} - Click to filter/set category`}
-                >
-                  {cat}
-                </button>
-              )
-            })}
-            {filterCategories.length > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFilterCategories([])
-                  setQuickAddCategories([])
-                }}
-                className="ml-1 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                title="Clear category filter"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-            </div>
-          </div>
-          {/* Recurrence Picker */}
-          <div className="flex flex-col">
-            <span className="text-[10px] text-gray-400 dark:text-gray-500 mb-0.5 ml-1">Repeat</span>
-            <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-md p-1">
-              {(['none', 'daily', 'weekly', 'monthly'] as RecurrenceType[]).map(rec => (
-                <button
-                  key={rec}
-                  type="button"
-                  onClick={() => setQuickAddRecurrence(rec)}
-                  className={`px-2 h-8 rounded text-xs font-medium transition-colors ${
-                    quickAddRecurrence === rec
-                      ? rec === 'none'
-                        ? 'bg-gray-500 text-white'
-                        : 'bg-indigo-500 text-white'
-                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                  }`}
-                  title={rec === 'none' ? 'No repeat' : `Repeat ${rec}`}
-                >
-                  {rec === 'none' ? '-' : rec.charAt(0).toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="relative flex-1 min-w-[200px]">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <input
-              ref={quickAddInputRef}
-              type="text"
-              value={quickAddTask}
-              onChange={(e) => setQuickAddTask(e.target.value)}
-              placeholder="Quick add task... (press Enter)"
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
-          </div>
-          {quickAddTask.trim() && (
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              Add
-            </button>
-          )}
-        </div>
-      </form>
-
-      {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-4">
+      {/* Search + Status Tabs */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        {/* Search */}
         <div className="relative">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -912,7 +709,7 @@ function TaskList() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search tasks..."
-            className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-64"
+            className="pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full sm:w-80"
           />
           {searchQuery && (
             <button
@@ -926,113 +723,8 @@ function TaskList() {
           )}
         </div>
 
-        {/* Date Filters - Quick Presets */}
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Quick preset buttons */}
-          <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
-            <button
-              onClick={() => {
-                const now = new Date()
-                setFilterYear(now.getFullYear())
-                setFilterMonth(now.getMonth())
-              }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                filterYear === new Date().getFullYear() && filterMonth === new Date().getMonth()
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700'
-              }`}
-            >
-              This Month
-            </button>
-            <button
-              onClick={() => {
-                const now = new Date()
-                const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
-                setFilterYear(lastMonth.getFullYear())
-                setFilterMonth(lastMonth.getMonth())
-              }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                (() => {
-                  const now = new Date()
-                  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
-                  return filterYear === lastMonth.getFullYear() && filterMonth === lastMonth.getMonth()
-                })()
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700'
-              }`}
-            >
-              Last Month
-            </button>
-            <button
-              onClick={() => {
-                setFilterYear(new Date().getFullYear())
-                setFilterMonth(null)
-              }}
-              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                filterYear === new Date().getFullYear() && filterMonth === null
-                  ? 'bg-blue-500 text-white'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-white dark:hover:bg-gray-700'
-              }`}
-            >
-              This Year
-            </button>
-          </div>
-
-          {/* Custom date selectors */}
-          <select
-            value={filterYear ?? ''}
-            onChange={(e) => {
-              const val = e.target.value
-              setFilterYear(val ? parseInt(val) : null)
-              if (!val) setFilterMonth(null)
-            }}
-            className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Year</option>
-            {availableYears.map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
-
-          <select
-            value={filterMonth ?? ''}
-            onChange={(e) => {
-              const val = e.target.value
-              if (val !== '') {
-                // Auto-select current year if no year selected
-                if (filterYear === null) {
-                  setFilterYear(new Date().getFullYear())
-                }
-                setFilterMonth(parseInt(val))
-              } else {
-                setFilterMonth(null)
-              }
-            }}
-            className="px-2 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Month</option>
-            {monthNames.map((name, index) => (
-              <option key={index} value={index}>{name.slice(0, 3)}</option>
-            ))}
-          </select>
-
-          {/* Active filter chip with clear */}
-          {(filterYear !== null) && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs">
-              {filterMonth !== null ? `${monthNames[filterMonth].slice(0, 3)} ` : ''}{filterYear}
-              <button
-                onClick={() => { setFilterYear(null); setFilterMonth(null) }}
-                className="ml-0.5 hover:text-blue-900 dark:hover:text-blue-100"
-              >
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </span>
-          )}
-        </div>
-
-        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg w-fit overflow-x-auto">
+        {/* Status Tabs */}
+        <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg overflow-x-auto">
           <button
             onClick={() => setFilter('all')}
             className={`px-3 sm:px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
@@ -1091,7 +783,243 @@ function TaskList() {
         </div>
       </div>
 
-      {/* Active Filters Summary & Progress */}
+      {/* Priority, Category & Date Filters */}
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+          {/* Priority Filter */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-md p-1">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 px-1">Priority</span>
+            {([1, 2, 3, 4, 5] as const).map(p => {
+              const isFilterActive = filterPriority === p
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    if (isFilterActive) {
+                      setFilterPriority(null)
+                      setQuickAddPriority(3)
+                    } else {
+                      setFilterPriority(p)
+                      setQuickAddPriority(p)
+                    }
+                  }}
+                  className={`w-7 h-7 rounded text-xs font-bold transition-colors ${
+                    isFilterActive
+                      ? p === 1 ? 'bg-red-500 text-white'
+                        : p === 2 ? 'bg-orange-500 text-white'
+                        : p === 3 ? 'bg-yellow-500 text-white'
+                        : p === 4 ? 'bg-blue-500 text-white'
+                        : 'bg-gray-500 text-white'
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  title={`Filter by Priority ${p}`}
+                >
+                  P{p}
+                </button>
+              )
+            })}
+            {filterPriority !== null && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFilterPriority(null)
+                  setQuickAddPriority(3)
+                }}
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                title="Clear priority filter"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-md p-1">
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 px-1">Category</span>
+            {TASK_CATEGORIES.map(cat => {
+              const isSelectedForFilter = filterCategories.includes(cat)
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setFilterCategories(prev =>
+                      isSelectedForFilter
+                        ? prev.filter(c => c !== cat)
+                        : [...prev, cat]
+                    )
+                  }}
+                  className={`px-2 h-7 rounded text-xs font-medium transition-colors ${
+                    isSelectedForFilter
+                      ? CATEGORY_COLORS[cat]
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                  title={`Filter by ${cat}`}
+                >
+                  {cat}
+                </button>
+              )
+            })}
+            {filterCategories.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setFilterCategories([])}
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                title="Clear category filter"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Date Filters */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+            <button
+              onClick={() => {
+                const now = new Date()
+                setFilterYear(now.getFullYear())
+                setFilterMonth(now.getMonth())
+              }}
+              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                filterYear === new Date().getFullYear() && filterMonth === new Date().getMonth()
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700'
+              }`}
+            >
+              This Month
+            </button>
+            <button
+              onClick={() => {
+                const now = new Date()
+                const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
+                setFilterYear(lastMonth.getFullYear())
+                setFilterMonth(lastMonth.getMonth())
+              }}
+              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                (() => {
+                  const now = new Date()
+                  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1)
+                  return filterYear === lastMonth.getFullYear() && filterMonth === lastMonth.getMonth()
+                })()
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700'
+              }`}
+            >
+              Last Month
+            </button>
+            <button
+              onClick={() => {
+                setFilterYear(new Date().getFullYear())
+                setFilterMonth(null)
+              }}
+              className={`px-2 py-1 rounded text-xs font-medium transition-colors ${
+                filterYear === new Date().getFullYear() && filterMonth === null
+                  ? 'bg-blue-500 text-white'
+                  : 'text-gray-600 dark:text-gray-400 hover:bg-white dark:hover:bg-gray-700'
+              }`}
+            >
+              This Year
+            </button>
+            <select
+              value={filterYear ?? ''}
+              onChange={(e) => {
+                const val = e.target.value
+                setFilterYear(val ? parseInt(val) : null)
+                if (!val) setFilterMonth(null)
+              }}
+              className="px-1 py-1 border-0 bg-transparent text-gray-900 dark:text-white text-xs focus:outline-none"
+            >
+              <option value="">Year</option>
+              {availableYears.map(year => (
+                <option key={year} value={year}>{year}</option>
+              ))}
+            </select>
+            <select
+              value={filterMonth ?? ''}
+              onChange={(e) => {
+                const val = e.target.value
+                if (val !== '') {
+                  if (filterYear === null) {
+                    setFilterYear(new Date().getFullYear())
+                  }
+                  setFilterMonth(parseInt(val))
+                } else {
+                  setFilterMonth(null)
+                }
+              }}
+              className="px-1 py-1 border-0 bg-transparent text-gray-900 dark:text-white text-xs focus:outline-none"
+            >
+              <option value="">Month</option>
+              {monthNames.map((name, index) => (
+                <option key={index} value={index}>{name.slice(0, 3)}</option>
+              ))}
+            </select>
+            {filterYear !== null && (
+              <button
+                onClick={() => { setFilterYear(null); setFilterMonth(null) }}
+                className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                title="Clear date filter"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+      </div>
+
+      {/* Bulk Actions Toolbar */}
+      {selectionMode && selectedTasks.size > 0 && (
+        <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 flex items-center gap-3 flex-wrap">
+          <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+            {selectedTasks.size} selected
+          </span>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={handleBulkMarkDone}
+              className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              Mark Done
+            </button>
+            <button
+              onClick={handleBulkMarkUndone}
+              className="px-3 py-1 text-sm bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Mark Undone
+            </button>
+            <select
+              onChange={(e) => handleBulkSetPriority(Number(e.target.value) as 1|2|3|4|5)}
+              className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+              defaultValue=""
+            >
+              <option value="" disabled>Set Priority</option>
+              <option value="1">P1 - Highest</option>
+              <option value="2">P2 - High</option>
+              <option value="3">P3 - Medium</option>
+              <option value="4">P4 - Low</option>
+              <option value="5">P5 - Lowest</option>
+            </select>
+            <button
+              onClick={handleBulkDelete}
+              className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Delete
+            </button>
+          </div>
+          <button
+            onClick={() => { setSelectionMode(false); setSelectedTasks(new Set()) }}
+            className="ml-auto text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Active Filters Summary */}
       {(filterPriority !== null || filterCategories.length > 0 || filterYear !== null || searchQuery) && (
         <div className="flex items-center justify-between gap-4 mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
           <div className="flex items-center gap-2 flex-wrap">
@@ -1145,6 +1073,103 @@ function TaskList() {
           </button>
         </div>
       )}
+
+      {/* Quick Add Task */}
+      <form onSubmit={handleQuickAdd} className="mb-4">
+        <div className="flex gap-2 flex-wrap items-center bg-white dark:bg-gray-800 rounded-lg shadow p-3">
+          <div className="relative flex-1 min-w-[200px]">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <input
+              ref={quickAddInputRef}
+              type="text"
+              value={quickAddTask}
+              onChange={(e) => setQuickAddTask(e.target.value)}
+              placeholder="Quick add task... (press Q to focus, Enter to add)"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+
+          {/* Priority Picker */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
+            {([1, 2, 3, 4, 5] as const).map(p => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => setQuickAddPriority(p)}
+                className={`w-7 h-7 rounded text-xs font-bold transition-colors ${
+                  quickAddPriority === p
+                    ? p === 1 ? 'bg-red-500 text-white'
+                      : p === 2 ? 'bg-orange-500 text-white'
+                      : p === 3 ? 'bg-yellow-500 text-white'
+                      : p === 4 ? 'bg-blue-500 text-white'
+                      : 'bg-gray-500 text-white'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                title={`Priority ${p}`}
+              >
+                P{p}
+              </button>
+            ))}
+          </div>
+
+          {/* Category Picker */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
+            {TASK_CATEGORIES.map(cat => {
+              const isSelected = quickAddCategories.includes(cat)
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setQuickAddCategories(prev =>
+                      isSelected ? prev.filter(c => c !== cat) : [...prev, cat]
+                    )
+                  }}
+                  className={`px-2 h-7 rounded text-xs font-medium transition-colors ${
+                    isSelected
+                      ? CATEGORY_COLORS[cat]
+                      : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                  }`}
+                  title={cat}
+                >
+                  {cat}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* Recurrence Picker */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
+            {(['none', 'daily', 'weekly', 'monthly'] as RecurrenceType[]).map(rec => (
+              <button
+                key={rec}
+                type="button"
+                onClick={() => setQuickAddRecurrence(rec)}
+                className={`px-2 h-7 rounded text-xs font-medium transition-colors ${
+                  quickAddRecurrence === rec
+                    ? rec === 'none'
+                      ? 'bg-gray-500 text-white'
+                      : 'bg-indigo-500 text-white'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                title={rec === 'none' ? 'No repeat' : `Repeat ${rec}`}
+              >
+                {rec === 'none' ? '-' : rec.charAt(0).toUpperCase()}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="submit"
+            disabled={!quickAddTask.trim()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Add
+          </button>
+        </div>
+      </form>
 
       {/* Stats Panel */}
       {showStats && <Stats tasks={tasks} />}
