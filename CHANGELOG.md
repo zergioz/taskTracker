@@ -2,6 +2,15 @@
 
 All notable changes to Task Tracker will be documented in this file.
 
+## [1.8.1] - 2026-02-24
+
+### Changed
+- **Bundle Size Optimization**: Reduced JS bundle from 77KB to 72KB gzipped (~7% reduction)
+  - Replaced `uuid` package with native `crypto.randomUUID()`
+  - Replaced `react-router-dom` (~15KB) with `wouter` (~1.5KB)
+- Removed dependencies: `uuid`, `@types/uuid`, `react-router-dom`
+- Added dependency: `wouter` (lightweight router with hash support)
+
 ## [1.6.0] - 2026-02-23
 
 ### Added

@@ -1,6 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
+import { Router } from 'wouter'
+import { useHashLocation } from 'wouter/use-hash-location'
 import { TaskProvider } from './context/TaskContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { ToastProvider } from './context/ToastContext'
@@ -9,7 +10,7 @@ import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <HashRouter>
+    <Router hook={useHashLocation}>
       <ThemeProvider>
         <ToastProvider>
           <TaskProvider>
@@ -17,6 +18,6 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           </TaskProvider>
         </ToastProvider>
       </ThemeProvider>
-    </HashRouter>
+    </Router>
   </React.StrictMode>,
 )

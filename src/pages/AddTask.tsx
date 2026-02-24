@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation } from 'wouter'
 import { useTasks } from '../context/TaskContext'
 import { useToast } from '../context/ToastContext'
 import { TaskFormData, TASK_CATEGORIES, CATEGORY_COLORS } from '../types/Task'
@@ -84,7 +84,7 @@ function FormattedNotes({ text }: { text: string }) {
 }
 
 function AddTask() {
-  const navigate = useNavigate()
+  const [, navigate] = useLocation()
   const { addTask } = useTasks()
   const { showToast } = useToast()
 

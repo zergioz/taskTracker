@@ -1,5 +1,4 @@
 import { createContext, useContext, useCallback, useMemo, ReactNode } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 import { useLocalStorage } from '../hooks/useLocalStorage'
 import { Task, TaskFormData, Subtask, getNextDueDate } from '../types/Task'
 
@@ -72,7 +71,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   const addTask = useCallback((data: TaskFormData) => {
     const newTask: Task = {
       ...data,
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       completedDate: data.done ? new Date().toISOString() : null,
       subtasks: data.subtasks || []
@@ -138,7 +137,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         const nextDueDate = getNextDueDate(taskToToggle.dueDate, taskToToggle.recurrence)
         const newTask: Task = {
           ...taskToToggle,
-          id: uuidv4(),
+          id: crypto.randomUUID(),
           done: false,
           completedDate: null,
           status: 'pending',
@@ -194,7 +193,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
     setTasks(prev => prev.map(task => {
       if (task.id !== taskId) return task
       const newSubtask: Subtask = {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         title,
         done: false
       }
@@ -251,7 +250,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
       const done = doneStr.toLowerCase().trim() === 'yes'
 
       const task: Task = {
-        id: uuidv4(),
+        id: crypto.randomUUID(),
         priority: mapPriority(priorityStr),
         status: done ? 'completed' : mapStatus(statusStr),
         task: taskName.trim(),

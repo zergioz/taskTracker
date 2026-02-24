@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
-import { Outlet, Link, useLocation } from 'react-router-dom'
+import { useState, useEffect, ReactNode } from 'react'
+import { Link, useLocation } from 'wouter'
 import { useTheme } from '../context/ThemeContext'
 import { useTasks } from '../context/TaskContext'
 import CommandPalette from './CommandPalette'
 
-function Layout() {
-  const location = useLocation()
+function Layout({ children }: { children: ReactNode }) {
+  const [location] = useLocation()
   const { theme, toggleTheme } = useTheme()
   const { tasks } = useTasks()
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
@@ -57,7 +57,7 @@ function Layout() {
                 <Link
                   to="/"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname === '/'
+                    location === '/'
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700'
                   }`}
@@ -67,7 +67,7 @@ function Layout() {
                 <Link
                   to="/add"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    location.pathname === '/add'
+                    location === '/add'
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700'
                   }`}
@@ -77,7 +77,7 @@ function Layout() {
                 <Link
                   to="/stats"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center gap-1 ${
-                    location.pathname === '/stats'
+                    location === '/stats'
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700'
                   }`}
@@ -124,7 +124,7 @@ function Layout() {
         </div>
       </header>
       <main className="max-w-[95%] xl:max-w-[90%] 2xl:max-w-[85%] mx-auto px-4 py-6">
-        <Outlet />
+        {children}
       </main>
 
       {/* Command Palette */}

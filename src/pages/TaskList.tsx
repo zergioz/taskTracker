@@ -1,12 +1,12 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation } from 'wouter'
 import { useTasks } from '../context/TaskContext'
 import { useToast } from '../context/ToastContext'
 import { useNotifications } from '../hooks/useNotifications'
 import TaskRow from '../components/TaskRow'
 import Modal from '../components/Modal'
 import Stats from '../components/Stats'
-import { getDueStatus, Task, exportTasksToJSON, exportTasksToCSV, downloadFile, getSubtaskProgress, getDueStatusColor, getDueStatusLabel, CATEGORY_COLORS, TASK_CATEGORIES, TaskCategory, RecurrenceType, getRecurrenceLabel } from '../types/Task'
+import { getDueStatus, Task, exportTasksToJSON, exportTasksToCSV, downloadFile, getSubtaskProgress, getDueStatusColor, getDueStatusLabel, CATEGORY_COLORS, TASK_CATEGORIES, TaskCategory, RecurrenceType } from '../types/Task'
 
 type FilterType = 'all' | 'active' | 'completed' | 'time-sensitive' | 'highlighted'
 
@@ -121,7 +121,7 @@ function TaskList() {
   const [showStats, setShowStats] = useState(true)
   const [quickAddRecurrence, setQuickAddRecurrence] = useState<RecurrenceType>('none')
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
-  const navigate = useNavigate()
+  const [, navigate] = useLocation()
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [filterYear, setFilterYear] = useState<number | null>(null)

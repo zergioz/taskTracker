@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useCallback, ReactNode } from 'react'
 import { ToastContainer, ToastData } from '../components/Toast'
-import { v4 as uuidv4 } from 'uuid'
 
 interface ToastContextType {
   showToast: (message: string, type?: ToastData['type'], undoAction?: () => void) => void
@@ -16,7 +15,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     type: ToastData['type'] = 'info',
     undoAction?: () => void
   ) => {
-    const id = uuidv4()
+    const id = crypto.randomUUID()
     setToasts(prev => [...prev, { id, message, type, undoAction }])
   }, [])
 

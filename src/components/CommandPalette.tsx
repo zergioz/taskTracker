@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation } from 'wouter'
 import { useTasks } from '../context/TaskContext'
 import { useTheme } from '../context/ThemeContext'
 import { exportTasksToJSON, exportTasksToCSV, downloadFile } from '../types/Task'
@@ -23,7 +23,7 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
+  const [, navigate] = useLocation()
   const { tasks, clearAllTasks, restoreTasks } = useTasks()
   const { theme, toggleTheme } = useTheme()
 

@@ -1,5 +1,4 @@
 import { useCallback, useMemo } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 import { useLocalStorage } from './useLocalStorage'
 import { Task, TaskFormData } from '../types/Task'
 
@@ -20,7 +19,7 @@ export function useTasks() {
   const addTask = useCallback((data: TaskFormData) => {
     const newTask: Task = {
       ...data,
-      id: uuidv4(),
+      id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       completedDate: data.done ? new Date().toISOString() : null
     }
