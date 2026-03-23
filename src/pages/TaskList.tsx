@@ -10,6 +10,7 @@ import Stats from '../components/Stats'
 import { getDueStatus, Task, exportTasksToJSON, exportTasksToCSV, downloadFile, getSubtaskProgress, getDueStatusColor, getDueStatusLabel, CATEGORY_COLORS, TASK_CATEGORIES, TaskCategory, RecurrenceType } from '../types/Task'
 
 type FilterType = 'all' | 'active' | 'completed' | 'time-sensitive' | 'highlighted'
+type SortType = 'default' | 'priority' | 'due-date' | 'created' | 'name'
 
 // Render formatted notes with markdown-like syntax
 function FormattedNotes({ text }: { text: string }) {
@@ -134,6 +135,7 @@ function TaskList() {
   const [filterPriority, setFilterPriority] = useLocalStorage<1 | 2 | 3 | 4 | 5 | null>('taskFilterPriority', null)
   const [quickAddCategories, setQuickAddCategories] = useState<TaskCategory[]>([])
   const [filterCategories, setFilterCategories] = useLocalStorage<TaskCategory[]>('taskFilterCategories', [])
+  const [sortBy, setSortBy] = useLocalStorage<SortType>('taskSortBy', 'default')
   const [notesModalOpen, setNotesModalOpen] = useState(false)
   const [notesModalTask, setNotesModalTask] = useState<Task | null>(null)
   const [notesModalValue, setNotesModalValue] = useState('')
@@ -303,10 +305,29 @@ function TaskList() {
         }
         return new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime()
       })
+    } else if (sortBy !== 'default') {
+      filtered = [...filtered].sort((a, b) => {
+        switch (sortBy) {
+          case 'priority':
+            return a.priority - b.priority
+          case 'due-date': {
+            if (!a.dueDate && !b.dueDate) return 0
+            if (!a.dueDate) return 1
+            if (!b.dueDate) return -1
+            return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+          }
+          case 'created':
+            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          case 'name':
+            return a.task.localeCompare(b.task)
+          default:
+            return 0
+        }
+      })
     }
 
     return filtered
-  }, [tasks, filter, searchQuery, filterYear, filterMonth, filterCategories, filterPriority])
+  }, [tasks, filter, searchQuery, filterYear, filterMonth, filterCategories, filterPriority, sortBy])
 
   const handleImport = () => {
     fileInputRef.current?.click()
@@ -1069,6 +1090,7 @@ function TaskList() {
               setFilterYear(null)
               setFilterMonth(null)
               setSearchQuery('')
+              setSortBy('default')
             }}
             className="text-xs text-blue-600 dark:text-blue-400 hover:underline whitespace-nowrap"
           >
@@ -1218,14 +1240,23 @@ function TaskList() {
             </p>
           </div>
         </div>
-        {tasks.length > 0 && (
-          <div className="w-32 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
-              style={{ width: `${(completedCount / tasks.length) * 100}%` }}
-            />
-          </div>
-        )}
+        {/* Sort Selector */}
+        <div className="flex items-center gap-1.5">
+          <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9m-9 4h6m4 0l4-4m0 0l4 4m-4-4v12" />
+          </svg>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortType)}
+            className="text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-1 pl-1 pr-6 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="default">Default</option>
+            <option value="priority">Priority</option>
+            <option value="due-date">Due Date</option>
+            <option value="created">Newest First</option>
+            <option value="name">Name A-Z</option>
+          </select>
+        </div>
       </div>
 
       {filteredTasks.length === 0 ? (
@@ -1272,6 +1303,7 @@ function TaskList() {
                 setFilterCategories([])
                 setFilterYear(null)
                 setFilterMonth(null)
+                setSortBy('default')
               }}
               className="mt-3 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
             >

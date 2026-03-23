@@ -2,6 +2,16 @@
 
 All notable changes to Task Tracker will be documented in this file.
 
+## [1.9.2] - 2026-03-23
+
+### Added
+- **Sort Selector**: Sort tasks by Priority, Due Date, Newest First, or Name A-Z — persists across reloads
+- **Consolidated Stats**: Merged Stats page charts (monthly/yearly) into the Stats widget as a collapsible "Show Charts" section
+
+### Removed
+- **Stats Page**: Removed separate `/stats` route and nav link — all stats are now in the inline widget
+- **Redundant Progress Bar**: Removed duplicate completion progress bar from the task list
+
 ## [1.9.1] - 2026-03-23
 
 ### Added
