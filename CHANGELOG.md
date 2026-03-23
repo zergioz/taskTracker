@@ -2,6 +2,15 @@
 
 All notable changes to Task Tracker will be documented in this file.
 
+## [2.0.0] - 2026-03-23
+
+### Added
+- **Task Detail Modal**: Click any task name to open a focused view with all details — priority, status, categories, dates, subtasks, and fully formatted notes
+- **Collapsible Quick Add**: Quick add starts clean (input + Add button); options toggle reveals priority, category, date, and recurrence pickers. Badges show active options when collapsed.
+
+### Changed
+- Task names are now clickable links that open the detail view
+
 ## [1.9.2] - 2026-03-23
 
 ### Added

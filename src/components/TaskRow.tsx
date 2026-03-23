@@ -73,6 +73,7 @@ interface TaskRowProps {
   onSelect?: (id: string, selected: boolean) => void
   selectionMode?: boolean
   onOpenNotes?: (task: Task) => void
+  onViewDetail?: (task: Task) => void
   onToggleHighlight?: (taskId: string) => void
   // Drag and drop
   onDragStart?: (e: React.DragEvent, taskId: string) => void
@@ -108,6 +109,7 @@ function TaskRow({
   onSelect,
   selectionMode,
   onOpenNotes,
+  onViewDetail,
   onToggleHighlight,
   onDragStart,
   onDragOver,
@@ -327,7 +329,13 @@ function TaskRow({
         </td>
         <td className={`px-4 py-3 text-gray-900 dark:text-white ${task.done ? 'line-through text-gray-400 dark:text-gray-500' : ''}`}>
           <div className="flex items-center gap-2 flex-wrap">
-            <span>{task.task}</span>
+            <button
+              onClick={() => onViewDetail?.(task)}
+              className="text-left hover:text-blue-600 dark:hover:text-blue-400 hover:underline transition-colors"
+              title="View task details"
+            >
+              {task.task}
+            </button>
             {task.recurrence && task.recurrence !== 'none' && (
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" title={`Repeats ${task.recurrence}`}>
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

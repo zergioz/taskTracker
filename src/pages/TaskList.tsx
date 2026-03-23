@@ -146,6 +146,8 @@ function TaskList() {
   const [selectedTasks, setSelectedTasks] = useState<Set<string>>(new Set())
   const [selectionMode, setSelectionMode] = useState(false)
   const [showExportMenu, setShowExportMenu] = useState(false)
+  const [quickAddExpanded, setQuickAddExpanded] = useState(false)
+  const [detailTask, setDetailTask] = useState<Task | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const quickAddInputRef = useRef<HTMLInputElement>(null)
   const exportMenuRef = useRef<HTMLDivElement>(null)
@@ -1111,11 +1113,50 @@ function TaskList() {
               type="text"
               value={quickAddTask}
               onChange={(e) => setQuickAddTask(e.target.value)}
+              onFocus={() => setQuickAddExpanded(true)}
               placeholder="Quick add task... (press Q to focus, Enter to add)"
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
 
+          {/* Options toggle */}
+          <button
+            type="button"
+            onClick={() => setQuickAddExpanded(!quickAddExpanded)}
+            className={`p-2 rounded-md transition-colors ${
+              quickAddExpanded
+                ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+            title={quickAddExpanded ? 'Hide options' : 'Show options (priority, category, date, recurrence)'}
+          >
+            <svg className={`w-5 h-5 transition-transform ${quickAddExpanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+          </button>
+
+          <button
+            type="submit"
+            disabled={!quickAddTask.trim()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Add
+          </button>
+
+          {/* Expanded options indicator */}
+          {!quickAddExpanded && (quickAddPriority !== 3 || quickAddCategories.length > 0 || quickAddDueDate || quickAddRecurrence !== 'none') && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+              {quickAddPriority !== 3 && <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">P{quickAddPriority}</span>}
+              {quickAddCategories.length > 0 && <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{quickAddCategories.join(', ')}</span>}
+              {quickAddDueDate && <span className="px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">{quickAddDueDate}</span>}
+              {quickAddRecurrence !== 'none' && <span className="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded">{quickAddRecurrence.charAt(0).toUpperCase()}</span>}
+            </div>
+          )}
+        </div>
+
+        {/* Collapsible pickers */}
+        {quickAddExpanded && (
+        <div className="flex gap-2 flex-wrap items-center bg-white dark:bg-gray-800 rounded-b-lg shadow px-3 pb-3 -mt-1 pt-2 border-t border-gray-100 dark:border-gray-700">
           {/* Priority Picker */}
           <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
             {([1, 2, 3, 4, 5] as const).map(p => (
@@ -1209,15 +1250,8 @@ function TaskList() {
               </button>
             ))}
           </div>
-
-          <button
-            type="submit"
-            disabled={!quickAddTask.trim()}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            Add
-          </button>
         </div>
+        )}
       </form>
 
       {/* Stats Panel */}
@@ -1370,6 +1404,7 @@ function TaskList() {
                       onSelect={handleSelectTask}
                       selectionMode={selectionMode}
                       onOpenNotes={handleOpenNotesModal}
+                      onViewDetail={setDetailTask}
                       onToggleHighlight={handleToggleHighlight}
                       onDragStart={handleDragStart}
                       onDragOver={handleDragOver}
@@ -1638,6 +1673,137 @@ function TaskList() {
             />
           )}
         </div>
+      </Modal>
+
+      {/* Task Detail Modal */}
+      <Modal
+        isOpen={!!detailTask}
+        onClose={() => setDetailTask(null)}
+        title={detailTask?.task || ''}
+        size="lg"
+        actions={
+          <>
+            <button
+              onClick={() => setDetailTask(null)}
+              className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+            >
+              Close
+            </button>
+            <button
+              onClick={() => { if (detailTask) { navigate(`/edit/${detailTask.id}`); setDetailTask(null) } }}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            >
+              Edit
+            </button>
+          </>
+        }
+      >
+        {detailTask && (
+          <div className="space-y-4">
+            {/* Status & Priority */}
+            <div className="flex flex-wrap gap-2">
+              <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${
+                detailTask.priority === 1 ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                : detailTask.priority === 2 ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400'
+                : detailTask.priority === 3 ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                : detailTask.priority === 4 ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400'
+              }`}>
+                Priority {detailTask.priority}
+              </span>
+              <span className={`inline-flex items-center px-2.5 py-1 rounded text-xs font-medium ${
+                detailTask.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                : detailTask.status === 'in-progress' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+              }`}>
+                {detailTask.status}
+              </span>
+              {detailTask.done && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                  Done
+                </span>
+              )}
+              {detailTask.highlighted && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">
+                  Starred
+                </span>
+              )}
+              {detailTask.recurrence && detailTask.recurrence !== 'none' && (
+                <span className="inline-flex items-center px-2.5 py-1 rounded text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400">
+                  Repeats {detailTask.recurrence}
+                </span>
+              )}
+            </div>
+
+            {/* Categories */}
+            {detailTask.categories && detailTask.categories.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Categories</p>
+                <div className="flex gap-1.5">
+                  {detailTask.categories.map(cat => (
+                    <span key={cat} className={`px-2 py-0.5 rounded text-xs font-medium ${CATEGORY_COLORS[cat]}`}>
+                      {cat}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Created</p>
+                <p className="text-gray-900 dark:text-white">{new Date(detailTask.createdAt).toLocaleDateString()}</p>
+              </div>
+              {detailTask.dueDate && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Due Date</p>
+                  <p className="text-gray-900 dark:text-white">
+                    {new Date(detailTask.dueDate + 'T00:00:00').toLocaleDateString()}
+                    {!detailTask.done && (
+                      <span className={`ml-2 text-xs ${getDueStatusColor(getDueStatus(detailTask.dueDate))} px-1.5 py-0.5 rounded`}>
+                        {getDueStatusLabel(getDueStatus(detailTask.dueDate))}
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
+              {detailTask.completedDate && (
+                <div>
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400">Completed</p>
+                  <p className="text-gray-900 dark:text-white">{new Date(detailTask.completedDate).toLocaleDateString()}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Subtasks */}
+            {detailTask.subtasks && detailTask.subtasks.length > 0 && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
+                  Subtasks ({detailTask.subtasks.filter(s => s.done).length}/{detailTask.subtasks.length})
+                </p>
+                <div className="space-y-1.5">
+                  {detailTask.subtasks.map(sub => (
+                    <div key={sub.id} className="flex items-center gap-2 text-sm">
+                      <span className={sub.done ? 'text-green-500' : 'text-gray-400'}>{sub.done ? '☑' : '☐'}</span>
+                      <span className={sub.done ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-white'}>{sub.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            {detailTask.notes && (
+              <div>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">Notes</p>
+                <div className="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 text-sm text-gray-900 dark:text-white">
+                  <FormattedNotes text={detailTask.notes} />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
     </div>
   )
