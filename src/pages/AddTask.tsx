@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocation } from 'wouter'
 import { useTasks } from '../context/TaskContext'
 import { useToast } from '../context/ToastContext'
-import { TaskFormData, TASK_CATEGORIES, CATEGORY_COLORS } from '../types/Task'
+import { TaskFormData, TASK_CATEGORIES, CATEGORY_COLORS, RecurrenceType } from '../types/Task'
 
 // Format inline text (bold, italic)
 function formatInlineText(text: string): (string | JSX.Element)[] {
@@ -258,6 +258,34 @@ function AddTask() {
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Tasks with due dates appear in the Urgent tab
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Recurrence
+          </label>
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1 w-fit">
+            {(['none', 'daily', 'weekly', 'monthly', 'yearly'] as RecurrenceType[]).map(rec => (
+              <button
+                key={rec}
+                type="button"
+                onClick={() => setFormData(prev => ({ ...prev, recurrence: rec }))}
+                className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                  (formData.recurrence || 'none') === rec
+                    ? rec === 'none'
+                      ? 'bg-gray-500 text-white'
+                      : 'bg-indigo-500 text-white'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+                }`}
+                title={rec === 'none' ? 'No repeat' : `Repeat ${rec}`}
+              >
+                {rec === 'none' ? 'None' : rec.charAt(0).toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            D = Daily, W = Weekly, M = Monthly, Y = Yearly
           </p>
         </div>
 

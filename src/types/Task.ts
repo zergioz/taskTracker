@@ -15,7 +15,7 @@ export const CATEGORY_COLORS: Record<TaskCategory, string> = {
   'NIPR': 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
 }
 
-export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly'
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly'
 
 export interface Task {
   id: string
@@ -140,6 +140,9 @@ export function getNextDueDate(currentDueDate: string | null, recurrence: Recurr
     case 'monthly':
       date.setMonth(date.getMonth() + 1)
       break
+    case 'yearly':
+      date.setFullYear(date.getFullYear() + 1)
+      break
   }
 
   return date.toISOString().split('T')[0]
@@ -150,6 +153,7 @@ export function getRecurrenceLabel(recurrence: RecurrenceType): string {
     case 'daily': return 'Daily'
     case 'weekly': return 'Weekly'
     case 'monthly': return 'Monthly'
+    case 'yearly': return 'Yearly'
     default: return ''
   }
 }

@@ -1142,7 +1142,7 @@ function TaskList() {
 
           {/* Recurrence Picker */}
           <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
-            {(['none', 'daily', 'weekly', 'monthly'] as RecurrenceType[]).map(rec => (
+            {(['none', 'daily', 'weekly', 'monthly', 'yearly'] as RecurrenceType[]).map(rec => (
               <button
                 key={rec}
                 type="button"

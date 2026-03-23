@@ -2,6 +2,12 @@
 
 All notable changes to Task Tracker will be documented in this file.
 
+## [1.8.2] - 2026-03-23
+
+### Added
+- **Yearly Recurrence**: Added "Y" (Yearly) option to the recurrence picker (D, W, M, Y)
+- **Recurrence on Add Task**: The Add New Task form now includes a recurrence picker
+
 ## [1.8.1] - 2026-02-24
 
 ### Changed
