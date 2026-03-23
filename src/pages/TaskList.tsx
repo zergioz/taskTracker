@@ -1144,17 +1144,27 @@ function TaskList() {
           </div>
 
           {/* Due Date Picker */}
-          <input
-            type="date"
-            value={quickAddDueDate || ''}
-            onChange={(e) => {
-              const val = e.target.value || null
-              setQuickAddDueDate(val)
-              if (!val) setQuickAddRecurrence('none')
-            }}
-            className="h-7 px-2 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-            title="Due date"
-          />
+          <div className="flex items-center gap-1">
+            <input
+              type="date"
+              value={quickAddDueDate || ''}
+              onChange={(e) => {
+                const val = e.target.value || null
+                setQuickAddDueDate(val)
+                if (!val) setQuickAddRecurrence('none')
+              }}
+              className="h-7 px-2 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+              title="Due date"
+            />
+            <button
+              type="button"
+              onClick={() => setQuickAddDueDate(new Date().toISOString().split('T')[0])}
+              className="h-7 px-2 text-xs font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+              title="Set due date to today"
+            >
+              Today
+            </button>
+          </div>
 
           {/* Recurrence Picker */}
           <div className={`flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1 ${!quickAddDueDate ? 'opacity-40' : ''}`}>
@@ -1253,6 +1263,21 @@ function TaskList() {
             {!searchQuery && !filterPriority && filterCategories.length === 0 && filter === 'time-sensitive' && 'Add due dates to tasks to track deadlines.'}
             {!searchQuery && !filterPriority && filterCategories.length === 0 && filter === 'highlighted' && 'Star important tasks to see them here.'}
           </p>
+          {(searchQuery || filterPriority !== null || filterCategories.length > 0 || filter !== 'all' || filterYear !== null) && (
+            <button
+              onClick={() => {
+                setFilter('all')
+                setSearchQuery('')
+                setFilterPriority(null)
+                setFilterCategories([])
+                setFilterYear(null)
+                setFilterMonth(null)
+              }}
+              className="mt-3 px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+            >
+              Clear All Filters
+            </button>
+          )}
         </div>
       ) : (
         <>

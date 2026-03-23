@@ -278,20 +278,29 @@ function AddTask() {
           <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Due Date
           </label>
-          <input
-            type="date"
-            id="dueDate"
-            value={formData.dueDate || ''}
-            onChange={(e) => {
-              const val = e.target.value || null
-              setFormData(prev => ({
-                ...prev,
-                dueDate: val,
-                ...(!val ? { recurrence: 'none' as RecurrenceType } : {})
-              }))
-            }}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+          <div className="flex gap-2">
+            <input
+              type="date"
+              id="dueDate"
+              value={formData.dueDate || ''}
+              onChange={(e) => {
+                const val = e.target.value || null
+                setFormData(prev => ({
+                  ...prev,
+                  dueDate: val,
+                  ...(!val ? { recurrence: 'none' as RecurrenceType } : {})
+                }))
+              }}
+              className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, dueDate: new Date().toISOString().split('T')[0] }))}
+              className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+            >
+              Today
+            </button>
+          </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Tasks with due dates appear in the Urgent tab
           </p>

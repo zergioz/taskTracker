@@ -2,6 +2,12 @@
 
 All notable changes to Task Tracker will be documented in this file.
 
+## [1.9.1] - 2026-03-23
+
+### Added
+- **"Today" Button**: One-click button to set due date to today on both Add/Edit Task form and quick-add bar
+- **"Clear All Filters" Button**: Shown in empty state when filters are active, resets all filters with one click
+
 ## [1.9.0] - 2026-03-23
 
 ### Added
