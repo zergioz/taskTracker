@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useLocation, useParams } from 'wouter'
 import { useTasks } from '../context/TaskContext'
 import { useToast } from '../context/ToastContext'
@@ -125,6 +125,36 @@ function AddTask() {
   const [errors, setErrors] = useState<{ task?: string }>({})
   const [touched, setTouched] = useState<{ task?: boolean }>({})
   const [notesPreviewMode, setNotesPreviewMode] = useState(false)
+  const formInitialized = useRef(false)
+  const isDirty = useRef(false)
+
+  // Mark form as dirty on any change after initialization
+  const setFormDataTracked = useCallback((updater: React.SetStateAction<TaskFormData>) => {
+    if (formInitialized.current) isDirty.current = true
+    setFormData(updater)
+  }, [])
+
+  // Mark form as initialized after first render / edit population
+  useEffect(() => {
+    const timer = setTimeout(() => { formInitialized.current = true }, 100)
+    return () => clearTimeout(timer)
+  }, [editId])
+
+  const confirmLeave = useCallback(() => {
+    if (!isDirty.current) return true
+    return window.confirm('You have unsaved changes. Are you sure you want to leave?')
+  }, [])
+
+  // Warn on browser/tab close
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isDirty.current) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -132,6 +162,7 @@ function AddTask() {
       // Escape to cancel
       if (e.key === 'Escape') {
         e.preventDefault()
+        if (!confirmLeave()) return
         navigate('/')
       }
       // Ctrl/Cmd + Enter to submit
@@ -166,6 +197,7 @@ function AddTask() {
 
     if (!validate()) return
 
+    isDirty.current = false
     if (isEditMode && editId) {
       updateTask(editId, formData)
       showToast('Task updated successfully', 'success')
@@ -182,7 +214,7 @@ function AddTask() {
   }
 
   const handleTaskChange = (value: string) => {
-    setFormData(prev => ({ ...prev, task: value }))
+    setFormDataTracked(prev => ({ ...prev, task: value }))
     if (touched.task) {
       // Re-validate on change if field was touched
       const newErrors: { task?: string } = {}
@@ -246,7 +278,7 @@ function AddTask() {
             <select
               id="priority"
               value={formData.priority}
-              onChange={(e) => setFormData(prev => ({ ...prev, priority: Number(e.target.value) as 1|2|3|4|5 }))}
+              onChange={(e) => setFormDataTracked(prev => ({ ...prev, priority: Number(e.target.value) as 1|2|3|4|5 }))}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value={1}>1 - Highest</option>
@@ -264,7 +296,7 @@ function AddTask() {
             <select
               id="status"
               value={formData.status}
-              onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as TaskFormData['status'] }))}
+              onChange={(e) => setFormDataTracked(prev => ({ ...prev, status: e.target.value as TaskFormData['status'] }))}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="pending">Pending</option>
@@ -285,7 +317,7 @@ function AddTask() {
               value={formData.dueDate || ''}
               onChange={(e) => {
                 const val = e.target.value || null
-                setFormData(prev => ({
+                setFormDataTracked(prev => ({
                   ...prev,
                   dueDate: val,
                   ...(!val ? { recurrence: 'none' as RecurrenceType } : {})
@@ -295,7 +327,7 @@ function AddTask() {
             />
             <button
               type="button"
-              onClick={() => setFormData(prev => ({ ...prev, dueDate: new Date().toISOString().split('T')[0] }))}
+              onClick={() => setFormDataTracked(prev => ({ ...prev, dueDate: new Date().toISOString().split('T')[0] }))}
               className="px-3 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-md hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
             >
               Today
@@ -316,7 +348,7 @@ function AddTask() {
                 key={rec}
                 type="button"
                 disabled={!formData.dueDate}
-                onClick={() => setFormData(prev => ({ ...prev, recurrence: rec }))}
+                onClick={() => setFormDataTracked(prev => ({ ...prev, recurrence: rec }))}
                 className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   (formData.recurrence || 'none') === rec
                     ? rec === 'none'
@@ -347,7 +379,7 @@ function AddTask() {
                   key={category}
                   type="button"
                   onClick={() => {
-                    setFormData(prev => ({
+                    setFormDataTracked(prev => ({
                       ...prev,
                       categories: isSelected
                         ? (prev.categories || []).filter(c => c !== category)
@@ -391,7 +423,7 @@ function AddTask() {
                   const text = formData.notes
                   const selectedText = text.substring(start, end)
                   const newText = text.substring(0, start) + `**${selectedText || 'bold'}**` + text.substring(end)
-                  setFormData(prev => ({ ...prev, notes: newText }))
+                  setFormDataTracked(prev => ({ ...prev, notes: newText }))
                   setTimeout(() => {
                     textarea.focus()
                     textarea.setSelectionRange(start + 2, start + 2 + (selectedText || 'bold').length)
@@ -413,7 +445,7 @@ function AddTask() {
                   const text = formData.notes
                   const selectedText = text.substring(start, end)
                   const newText = text.substring(0, start) + `*${selectedText || 'italic'}*` + text.substring(end)
-                  setFormData(prev => ({ ...prev, notes: newText }))
+                  setFormDataTracked(prev => ({ ...prev, notes: newText }))
                   setTimeout(() => {
                     textarea.focus()
                     textarea.setSelectionRange(start + 1, start + 1 + (selectedText || 'italic').length)
@@ -435,7 +467,7 @@ function AddTask() {
                   const text = formData.notes
                   const lineStart = text.lastIndexOf('\n', start - 1) + 1
                   const newText = text.substring(0, lineStart) + '- ' + text.substring(lineStart)
-                  setFormData(prev => ({ ...prev, notes: newText }))
+                  setFormDataTracked(prev => ({ ...prev, notes: newText }))
                   setTimeout(() => {
                     textarea.focus()
                     textarea.setSelectionRange(start + 2, start + 2)
@@ -459,7 +491,7 @@ function AddTask() {
                   const lineStart = text.lastIndexOf('\n', start - 1) + 1
                   const lineNum = text.substring(0, start).split('\n').length
                   const newText = text.substring(0, lineStart) + `${lineNum}. ` + text.substring(lineStart)
-                  setFormData(prev => ({ ...prev, notes: newText }))
+                  setFormDataTracked(prev => ({ ...prev, notes: newText }))
                   setTimeout(() => {
                     textarea.focus()
                     textarea.setSelectionRange(start + 3, start + 3)
@@ -483,7 +515,7 @@ function AddTask() {
                   const text = formData.notes
                   const selectedText = text.substring(start, end)
                   const newText = text.substring(0, start) + `[ ] ${selectedText || 'todo'}` + text.substring(end)
-                  setFormData(prev => ({ ...prev, notes: newText }))
+                  setFormDataTracked(prev => ({ ...prev, notes: newText }))
                   setTimeout(() => {
                     textarea.focus()
                     textarea.setSelectionRange(start + 4, start + 4 + (selectedText || 'todo').length)
@@ -524,7 +556,7 @@ function AddTask() {
             <textarea
               id="notes"
               value={formData.notes}
-              onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+              onChange={(e) => setFormDataTracked(prev => ({ ...prev, notes: e.target.value }))}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-b-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
               placeholder="Add notes... (supports **bold**, *italic*, - bullet lists, [ ] checkboxes)"
@@ -540,7 +572,7 @@ function AddTask() {
             type="checkbox"
             id="done"
             checked={formData.done}
-            onChange={(e) => setFormData(prev => ({ ...prev, done: e.target.checked }))}
+            onChange={(e) => setFormDataTracked(prev => ({ ...prev, done: e.target.checked }))}
             className="w-4 h-4 text-blue-600 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 bg-white dark:bg-gray-700"
           />
           <label htmlFor="done" className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -561,7 +593,7 @@ function AddTask() {
           </button>
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={() => { if (confirmLeave()) navigate('/') }}
             className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors font-medium"
           >
             Cancel

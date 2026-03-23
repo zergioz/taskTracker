@@ -2,6 +2,14 @@
 
 All notable changes to Task Tracker will be documented in this file.
 
+## [2.0.1] - 2026-03-23
+
+### Added
+- **Unsaved Changes Warning**: Prompts confirmation when navigating away from Add/Edit Task with unsaved changes (Escape, Cancel, browser close)
+
+### Removed
+- **Dead Inline Edit Code**: Removed ~170 lines of unused inline editing code from TaskRow after switching to full-page edit route
+
 ## [2.0.0] - 2026-03-23
 
 ### Added

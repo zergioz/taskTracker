@@ -1395,7 +1395,6 @@ function TaskList() {
                       key={task.id}
                       task={task}
                       onToggle={toggleDone}
-                      onUpdate={updateTask}
                       onDelete={handleDeleteTask}
                       onAddSubtask={addSubtask}
                       onToggleSubtask={toggleSubtask}

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useLocation } from 'wouter'
-import { Task, Subtask, getDueStatus, getDueStatusColor, getDueStatusLabel, getSubtaskProgress, CATEGORY_COLORS, TaskCategory, TASK_CATEGORIES, getRecurrenceLabel } from '../types/Task'
+import { Task, Subtask, getDueStatus, getDueStatusColor, getDueStatusLabel, getSubtaskProgress, CATEGORY_COLORS, getRecurrenceLabel } from '../types/Task'
 
 // Format notes with basic markdown-like syntax
 function formatNotesPreview(notes: string): JSX.Element[] {
@@ -64,7 +64,6 @@ function formatNotesPreview(notes: string): JSX.Element[] {
 interface TaskRowProps {
   task: Task
   onToggle: (id: string) => void
-  onUpdate: (id: string, updates: Partial<Task>) => void
   onDelete: (id: string) => void
   onAddSubtask?: (taskId: string, title: string) => void
   onToggleSubtask?: (taskId: string, subtaskId: string) => void
@@ -100,7 +99,6 @@ const statusColors: Record<string, string> = {
 function TaskRow({
   task,
   onToggle,
-  onUpdate,
   onDelete,
   onAddSubtask,
   onToggleSubtask,
@@ -118,48 +116,8 @@ function TaskRow({
   isDragging
 }: TaskRowProps) {
   const [, navigate] = useLocation()
-  const [isEditing, setIsEditing] = useState(false)
   const [showSubtasks, setShowSubtasks] = useState(false)
   const [newSubtask, setNewSubtask] = useState('')
-  const [editData, setEditData] = useState({
-    task: task.task,
-    notes: task.notes,
-    priority: task.priority,
-    status: task.status,
-    dueDate: task.dueDate,
-    categories: task.categories || [] as TaskCategory[]
-  })
-
-  // Handle Escape key to cancel editing
-  useEffect(() => {
-    if (!isEditing) return
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleCancel()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isEditing])
-
-  const handleSave = () => {
-    onUpdate(task.id, editData)
-    setIsEditing(false)
-  }
-
-  const handleCancel = () => {
-    setEditData({
-      task: task.task,
-      notes: task.notes,
-      priority: task.priority,
-      status: task.status,
-      dueDate: task.dueDate,
-      categories: task.categories || []
-    })
-    setIsEditing(false)
-  }
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -194,106 +152,6 @@ function TaskRow({
 
   const subtaskProgress = getSubtaskProgress(task.subtasks)
   const hasSubtasks = subtaskProgress.total > 0
-
-  if (isEditing) {
-    return (
-      <tr className="bg-blue-50 dark:bg-blue-900/20">
-        <td className="px-4 py-3">
-          <select
-            value={editData.priority}
-            onChange={(e) => setEditData(prev => ({ ...prev, priority: Number(e.target.value) as 1|2|3|4|5 }))}
-            className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
-          >
-            {[1, 2, 3, 4, 5].map(p => (
-              <option key={p} value={p}>P{p}</option>
-            ))}
-          </select>
-        </td>
-        <td className="px-4 py-3">
-          <select
-            value={editData.status}
-            onChange={(e) => setEditData(prev => ({ ...prev, status: e.target.value as Task['status'] }))}
-            className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
-          >
-            <option value="pending">Pending</option>
-            <option value="in-progress">In Progress</option>
-            <option value="completed">Completed</option>
-          </select>
-        </td>
-        <td className="px-4 py-3">
-          <div className="space-y-2">
-            <input
-              type="text"
-              value={editData.task}
-              onChange={(e) => setEditData(prev => ({ ...prev, task: e.target.value }))}
-              className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
-            />
-            <div className="flex gap-1 flex-wrap">
-              {TASK_CATEGORIES.map(cat => {
-                const isSelected = editData.categories.includes(cat)
-                return (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => {
-                      setEditData(prev => ({
-                        ...prev,
-                        categories: isSelected
-                          ? prev.categories.filter(c => c !== cat)
-                          : [...prev.categories, cat]
-                      }))
-                    }}
-                    className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                      isSelected
-                        ? CATEGORY_COLORS[cat]
-                        : 'bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {isSelected && <span className="mr-0.5">✓</span>}
-                    {cat}
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-        </td>
-        <td className="px-4 py-3">
-          <input
-            type="text"
-            value={editData.notes}
-            onChange={(e) => setEditData(prev => ({ ...prev, notes: e.target.value }))}
-            className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
-          />
-        </td>
-        <td className="px-4 py-3">
-          <input
-            type="date"
-            value={editData.dueDate || ''}
-            onChange={(e) => setEditData(prev => ({ ...prev, dueDate: e.target.value || null }))}
-            className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-700 dark:text-white"
-          />
-        </td>
-        <td className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">-</td>
-        <td className="px-4 py-3 text-center text-gray-500 dark:text-gray-400">-</td>
-        <td className="px-4 py-3">
-          <div className="flex gap-2">
-            <button
-              onClick={handleSave}
-              className="px-2 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600"
-            >
-              Save
-            </button>
-            <button
-              onClick={handleCancel}
-              className="px-2 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
-            >
-              Cancel
-            </button>
-          </div>
-        </td>
-      </tr>
-    )
-  }
 
   const isOverdue = !task.done && task.dueDate && getDueStatus(task.dueDate) === 'overdue'
   const isDueToday = !task.done && task.dueDate && getDueStatus(task.dueDate) === 'today'
