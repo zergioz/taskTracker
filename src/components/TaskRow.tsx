@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useLocation } from 'wouter'
 import { Task, Subtask, getDueStatus, getDueStatusColor, getDueStatusLabel, getSubtaskProgress, CATEGORY_COLORS, TaskCategory, TASK_CATEGORIES, getRecurrenceLabel } from '../types/Task'
 
 // Format notes with basic markdown-like syntax
@@ -114,6 +115,7 @@ function TaskRow({
   onDragEnd,
   isDragging
 }: TaskRowProps) {
+  const [, navigate] = useLocation()
   const [isEditing, setIsEditing] = useState(false)
   const [showSubtasks, setShowSubtasks] = useState(false)
   const [newSubtask, setNewSubtask] = useState('')
@@ -435,7 +437,7 @@ function TaskRow({
               </svg>
             </button>
             <button
-              onClick={() => setIsEditing(true)}
+              onClick={() => navigate(`/edit/${task.id}`)}
               className="p-1.5 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
               title="Edit task"
             >

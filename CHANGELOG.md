@@ -2,11 +2,17 @@
 
 All notable changes to Task Tracker will be documented in this file.
 
-## [1.8.2] - 2026-03-23
+## [1.9.0] - 2026-03-23
 
 ### Added
+- **Edit Task Route**: Full-page edit form at `/edit/:id` — edit button now opens the complete form instead of limited inline editing
 - **Yearly Recurrence**: Added "Y" (Yearly) option to the recurrence picker (D, W, M, Y)
 - **Recurrence on Add Task**: The Add New Task form now includes a recurrence picker
+- **Due Date on Quick Add**: Quick add bar now includes a date picker
+- **Persistent Filters**: Search, status, priority, category, and date filters persist across page navigation and reloads
+
+### Changed
+- **Due Date + Recurrence Coupling**: Recurrence picker is disabled when no due date is set; clearing a due date resets recurrence to "none"
 
 ## [1.8.1] - 2026-02-24
 

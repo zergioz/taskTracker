@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useLocation } from 'wouter'
+import { useLocation, useParams } from 'wouter'
 import { useTasks } from '../context/TaskContext'
 import { useToast } from '../context/ToastContext'
 import { TaskFormData, TASK_CATEGORIES, CATEGORY_COLORS, RecurrenceType } from '../types/Task'
@@ -85,8 +85,13 @@ function FormattedNotes({ text }: { text: string }) {
 
 function AddTask() {
   const [, navigate] = useLocation()
-  const { addTask } = useTasks()
+  const params = useParams<{ id?: string }>()
+  const editId = params?.id
+  const { addTask, updateTask, tasks } = useTasks()
   const { showToast } = useToast()
+
+  const existingTask = editId ? tasks.find(t => t.id === editId) : null
+  const isEditMode = !!editId
 
   const [formData, setFormData] = useState<TaskFormData>({
     priority: 3,
@@ -97,6 +102,25 @@ function AddTask() {
     dueDate: null,
     categories: []
   })
+
+  // Populate form when editing an existing task
+  useEffect(() => {
+    if (existingTask) {
+      setFormData({
+        priority: existingTask.priority,
+        status: existingTask.status,
+        task: existingTask.task,
+        notes: existingTask.notes,
+        done: existingTask.done,
+        dueDate: existingTask.dueDate,
+        categories: existingTask.categories || [],
+        recurrence: existingTask.recurrence || 'none'
+      })
+    } else if (editId) {
+      // Task not found, redirect
+      navigate('/')
+    }
+  }, [editId])
 
   const [errors, setErrors] = useState<{ task?: string }>({})
   const [touched, setTouched] = useState<{ task?: boolean }>({})
@@ -142,8 +166,13 @@ function AddTask() {
 
     if (!validate()) return
 
-    addTask(formData)
-    showToast('Task created successfully', 'success')
+    if (isEditMode && editId) {
+      updateTask(editId, formData)
+      showToast('Task updated successfully', 'success')
+    } else {
+      addTask(formData)
+      showToast('Task created successfully', 'success')
+    }
     navigate('/')
   }
 
@@ -171,7 +200,7 @@ function AddTask() {
   return (
     <div className="max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Add New Task</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{isEditMode ? 'Edit Task' : 'Add New Task'}</h1>
         <span className="text-xs text-gray-400 dark:text-gray-500">
           Press <kbd className="px-1.5 py-0.5 bg-gray-200 dark:bg-gray-700 rounded">Esc</kbd> to cancel
         </span>
@@ -253,7 +282,14 @@ function AddTask() {
             type="date"
             id="dueDate"
             value={formData.dueDate || ''}
-            onChange={(e) => setFormData(prev => ({ ...prev, dueDate: e.target.value || null }))}
+            onChange={(e) => {
+              const val = e.target.value || null
+              setFormData(prev => ({
+                ...prev,
+                dueDate: val,
+                ...(!val ? { recurrence: 'none' as RecurrenceType } : {})
+              }))
+            }}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -265,11 +301,12 @@ function AddTask() {
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Recurrence
           </label>
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1 w-fit">
+          <div className={`flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1 w-fit ${!formData.dueDate ? 'opacity-40' : ''}`}>
             {(['none', 'daily', 'weekly', 'monthly', 'yearly'] as RecurrenceType[]).map(rec => (
               <button
                 key={rec}
                 type="button"
+                disabled={!formData.dueDate}
                 onClick={() => setFormData(prev => ({ ...prev, recurrence: rec }))}
                 className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
                   (formData.recurrence || 'none') === rec
@@ -277,15 +314,15 @@ function AddTask() {
                       ? 'bg-gray-500 text-white'
                       : 'bg-indigo-500 text-white'
                     : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-                title={rec === 'none' ? 'No repeat' : `Repeat ${rec}`}
+                } ${!formData.dueDate ? 'cursor-not-allowed' : ''}`}
+                title={!formData.dueDate ? 'Set a due date first' : rec === 'none' ? 'No repeat' : `Repeat ${rec}`}
               >
                 {rec === 'none' ? 'None' : rec.charAt(0).toUpperCase()}
               </button>
             ))}
           </div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            D = Daily, W = Weekly, M = Monthly, Y = Yearly
+            {formData.dueDate ? 'D = Daily, W = Weekly, M = Monthly, Y = Yearly' : 'Set a due date to enable recurrence'}
           </p>
         </div>
 
@@ -510,7 +547,7 @@ function AddTask() {
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
-            Add Task
+            {isEditMode ? 'Save Changes' : 'Add Task'}
             <span className="text-xs opacity-75">(Ctrl+Enter)</span>
           </button>
           <button

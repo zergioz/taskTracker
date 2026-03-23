@@ -3,6 +3,7 @@ import { Link, useLocation } from 'wouter'
 import { useTasks } from '../context/TaskContext'
 import { useToast } from '../context/ToastContext'
 import { useNotifications } from '../hooks/useNotifications'
+import { useLocalStorage } from '../hooks/useLocalStorage'
 import TaskRow from '../components/TaskRow'
 import Modal from '../components/Modal'
 import Stats from '../components/Stats'
@@ -120,18 +121,19 @@ function TaskList() {
   const { notificationPermission, requestPermission } = useNotifications(tasks, updateTask)
   const [showStats, setShowStats] = useState(true)
   const [quickAddRecurrence, setQuickAddRecurrence] = useState<RecurrenceType>('none')
+  const [quickAddDueDate, setQuickAddDueDate] = useState<string | null>(null)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
   const [, navigate] = useLocation()
-  const [filter, setFilter] = useState<FilterType>('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [filterYear, setFilterYear] = useState<number | null>(null)
-  const [filterMonth, setFilterMonth] = useState<number | null>(null)
+  const [filter, setFilter] = useLocalStorage<FilterType>('taskFilter', 'all')
+  const [searchQuery, setSearchQuery] = useLocalStorage<string>('taskSearchQuery', '')
+  const [filterYear, setFilterYear] = useLocalStorage<number | null>('taskFilterYear', null)
+  const [filterMonth, setFilterMonth] = useLocalStorage<number | null>('taskFilterMonth', null)
   const [importMessage, setImportMessage] = useState<string | null>(null)
   const [quickAddTask, setQuickAddTask] = useState('')
   const [quickAddPriority, setQuickAddPriority] = useState<1 | 2 | 3 | 4 | 5>(3)
-  const [filterPriority, setFilterPriority] = useState<1 | 2 | 3 | 4 | 5 | null>(null)
+  const [filterPriority, setFilterPriority] = useLocalStorage<1 | 2 | 3 | 4 | 5 | null>('taskFilterPriority', null)
   const [quickAddCategories, setQuickAddCategories] = useState<TaskCategory[]>([])
-  const [filterCategories, setFilterCategories] = useState<TaskCategory[]>([])
+  const [filterCategories, setFilterCategories] = useLocalStorage<TaskCategory[]>('taskFilterCategories', [])
   const [notesModalOpen, setNotesModalOpen] = useState(false)
   const [notesModalTask, setNotesModalTask] = useState<Task | null>(null)
   const [notesModalValue, setNotesModalValue] = useState('')
@@ -369,16 +371,17 @@ function TaskList() {
       status: 'pending',
       notes: '',
       done: false,
-      dueDate: null,
+      dueDate: quickAddDueDate,
       subtasks: [],
       highlighted: false,
       categories: quickAddCategories,
-      recurrence: quickAddRecurrence
+      recurrence: quickAddDueDate ? quickAddRecurrence : 'none'
     })
     setQuickAddTask('')
     setQuickAddPriority(3)
     setQuickAddCategories([])
     setQuickAddRecurrence('none')
+    setQuickAddDueDate(null)
     quickAddInputRef.current?.focus()
     showToast('Task added', 'success')
   }
@@ -1140,12 +1143,26 @@ function TaskList() {
             })}
           </div>
 
+          {/* Due Date Picker */}
+          <input
+            type="date"
+            value={quickAddDueDate || ''}
+            onChange={(e) => {
+              const val = e.target.value || null
+              setQuickAddDueDate(val)
+              if (!val) setQuickAddRecurrence('none')
+            }}
+            className="h-7 px-2 text-xs border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+            title="Due date"
+          />
+
           {/* Recurrence Picker */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1">
+          <div className={`flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-md p-1 ${!quickAddDueDate ? 'opacity-40' : ''}`}>
             {(['none', 'daily', 'weekly', 'monthly', 'yearly'] as RecurrenceType[]).map(rec => (
               <button
                 key={rec}
                 type="button"
+                disabled={!quickAddDueDate}
                 onClick={() => setQuickAddRecurrence(rec)}
                 className={`px-2 h-7 rounded text-xs font-medium transition-colors ${
                   quickAddRecurrence === rec
@@ -1153,8 +1170,8 @@ function TaskList() {
                       ? 'bg-gray-500 text-white'
                       : 'bg-indigo-500 text-white'
                     : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-                title={rec === 'none' ? 'No repeat' : `Repeat ${rec}`}
+                } ${!quickAddDueDate ? 'cursor-not-allowed' : ''}`}
+                title={!quickAddDueDate ? 'Set a due date first' : rec === 'none' ? 'No repeat' : `Repeat ${rec}`}
               >
                 {rec === 'none' ? '-' : rec.charAt(0).toUpperCase()}
               </button>

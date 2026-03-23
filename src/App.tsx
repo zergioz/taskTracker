@@ -10,6 +10,7 @@ function App() {
       <Switch>
         <Route path="/" component={TaskList} />
         <Route path="/add" component={AddTask} />
+        <Route path="/edit/:id" component={AddTask} />
         <Route path="/stats" component={Stats} />
       </Switch>
     </Layout>
