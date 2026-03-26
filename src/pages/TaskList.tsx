@@ -1004,15 +1004,26 @@ function TaskList() {
           </div>
 
           {/* Hide Completed Toggle */}
-          <label className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-md p-1 px-2 cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={hideCompleted}
-              onChange={(e) => setHideCompleted(e.target.checked)}
-              className="w-3.5 h-3.5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
-            />
-            <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">Hide completed</span>
-          </label>
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-md p-1">
+            <button
+              onClick={() => setHideCompleted(!hideCompleted)}
+              className={`px-2 h-7 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
+                hideCompleted
+                  ? 'bg-indigo-500 text-white'
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+              }`}
+              title={hideCompleted ? 'Show completed tasks' : 'Hide completed tasks'}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {hideCompleted ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                )}
+              </svg>
+              Hide done
+            </button>
+          </div>
       </div>
 
       {/* Bulk Actions Toolbar */}
