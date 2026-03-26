@@ -1,6 +1,6 @@
 {
   "name": "tr-tracker",
-  "version": "2.1.0",
+  "version": "2.3.0",
   "description": "Lightweight task tracker with local storage",
   "main": "dist-electron/main.js",
   "author": "Sergio F. Rodriguez: your daddy!",
@@ -27,6 +27,7 @@
     "electron": "^28.2.0",
     "electron-builder": "^24.9.1",
     "postcss": "^8.4.35",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
     "vite": "^5.1.0",
@@ -36,6 +37,7 @@
   "build": {
     "appId": "com.trtracker.app",
     "productName": "Task Tracker",
+    "icon": "build/icon",
     "directories": {
       "output": "release"
     },
@@ -44,11 +46,13 @@
       "dist-electron/**/*"
     ],
     "mac": {
-      "target": "dmg"
+      "target": "dmg",
+      "icon": "build/icon.png"
     },
     "win": {
       "target": "portable",
-      "signAndEditExecutable": false
+      "signAndEditExecutable": false,
+      "icon": "build/icon.ico"
     },
     "linux": {
       "target": "AppImage"

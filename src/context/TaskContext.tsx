@@ -37,6 +37,36 @@ function mapPriority(priority: string): 1 | 2 | 3 | 4 | 5 {
   return num as 1 | 2 | 3 | 4 | 5
 }
 
+// Parse a delimited line respecting quoted fields (handles CSV with commas inside quotes)
+function parseDelimitedLine(line: string, delimiter: string): string[] {
+  const fields: string[] = []
+  let current = ''
+  let inQuotes = false
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i]
+    if (inQuotes) {
+      if (char === '"' && line[i + 1] === '"') {
+        current += '"'
+        i++ // skip escaped quote
+      } else if (char === '"') {
+        inQuotes = false
+      } else {
+        current += char
+      }
+    } else if (char === '"') {
+      inQuotes = true
+    } else if (char === delimiter) {
+      fields.push(current)
+      current = ''
+    } else {
+      current += char
+    }
+  }
+  fields.push(current)
+  return fields
+}
+
 // Migrate old tasks that don't have dueDate, subtasks, highlighted, categories, recurrence, or sortOrder
 function migrateTask(task: Partial<Task> & { id: string }, index: number): Task {
   return {
@@ -239,15 +269,57 @@ export function TaskProvider({ children }: { children: ReactNode }) {
   }, [setTasks])
 
   const importTasks = useCallback((data: string): number => {
-    const lines = data.trim().split('\n')
+    const trimmed = data.trim()
+
+    // Try JSON import first (exported via JSON export)
+    if (trimmed.startsWith('[')) {
+      try {
+        const parsed = JSON.parse(trimmed) as Partial<Task>[]
+        const newTasks = parsed
+          .filter(t => t.task)
+          .map((t, i) => ({
+            ...migrateTask({ id: crypto.randomUUID(), ...t } as Task, i),
+            id: crypto.randomUUID(),
+            createdAt: t.createdAt || new Date().toISOString()
+          }))
+        setTasks(prev => [...prev, ...newTasks])
+        return newTasks.length
+      } catch { /* fall through to delimited parsing */ }
+    }
+
+    const lines = trimmed.split('\n')
+    if (lines.length === 0) return 0
+
+    // Detect delimiter: if first line contains tabs, use TSV; otherwise CSV
+    const delimiter = lines[0].includes('\t') ? '\t' : ','
+
+    // Skip header row if it looks like one (starts with non-numeric value in priority column)
+    const firstFields = parseDelimitedLine(lines[0], delimiter)
+    const startIndex = (firstFields.length >= 3 && isNaN(Number(firstFields[0])) && firstFields[0].toLowerCase() !== 'yes') ? 1 : 0
+
     const newTasks: Task[] = []
 
-    for (const line of lines) {
-      const parts = line.split('\t')
+    for (let i = startIndex; i < lines.length; i++) {
+      const line = lines[i]
+      if (!line.trim()) continue
+
+      const parts = parseDelimitedLine(line, delimiter)
       if (parts.length < 3) continue
 
-      const [priorityStr, statusStr, taskName, notes = '', doneStr = ''] = parts
+      // Support both formats:
+      // TSV legacy: priority, status, task, notes, done
+      // CSV export: id, priority, status, task, notes, done, dueDate, createdAt, completedDate, subtasks
+      let priorityStr: string, statusStr: string, taskName: string, notes: string, doneStr: string, dueDateStr: string
+      if (parts.length >= 6 && isNaN(Number(parts[0]))) {
+        // CSV export format (first field is UUID id)
+        [, priorityStr, statusStr, taskName, notes, doneStr, dueDateStr = ''] = parts
+      } else {
+        // TSV/simple format
+        [priorityStr, statusStr, taskName, notes = '', doneStr = '', dueDateStr = ''] = parts
+      }
+
       const done = doneStr.toLowerCase().trim() === 'yes'
+      const dueDate = dueDateStr.trim() || null
 
       const task: Task = {
         id: crypto.randomUUID(),
@@ -258,7 +330,7 @@ export function TaskProvider({ children }: { children: ReactNode }) {
         done,
         completedDate: done ? new Date().toISOString() : null,
         createdAt: new Date().toISOString(),
-        dueDate: null,
+        dueDate,
         subtasks: []
       }
 
