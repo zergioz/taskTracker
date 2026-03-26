@@ -136,6 +136,7 @@ function TaskList() {
   const [quickAddCategories, setQuickAddCategories] = useState<TaskCategory[]>([])
   const [filterCategories, setFilterCategories] = useLocalStorage<TaskCategory[]>('taskFilterCategories', [])
   const [sortBy, setSortBy] = useLocalStorage<SortType>('taskSortBy', 'default')
+  const [hideCompleted, setHideCompleted] = useLocalStorage<boolean>('taskHideCompleted', false)
   const [notesModalOpen, setNotesModalOpen] = useState(false)
   const [notesModalTask, setNotesModalTask] = useState<Task | null>(null)
   const [notesModalValue, setNotesModalValue] = useState('')
@@ -262,7 +263,12 @@ function TaskList() {
   }, [])
 
   const filteredTasks = useMemo(() => {
+    const isSearching = searchQuery.trim().length > 0
+
     let filtered = tasks.filter(task => {
+      // Hide completed tasks unless searching or explicitly viewing completed
+      if (hideCompleted && task.done && !isSearching && filter !== 'completed') return false
+
       if (filter === 'active' && task.done) return false
       if (filter === 'completed' && !task.done) return false
       if (filter === 'time-sensitive' && (!task.dueDate || task.done)) return false
@@ -275,7 +281,7 @@ function TaskList() {
         if (filterMonth !== null && taskDate.getMonth() !== filterMonth) return false
       }
 
-      if (searchQuery.trim()) {
+      if (isSearching) {
         const query = searchQuery.toLowerCase()
         const matchesTask = task.task.toLowerCase().includes(query)
         const matchesNotes = task.notes.toLowerCase().includes(query)
@@ -329,7 +335,7 @@ function TaskList() {
     }
 
     return filtered
-  }, [tasks, filter, searchQuery, filterYear, filterMonth, filterCategories, filterPriority, sortBy])
+  }, [tasks, filter, searchQuery, filterYear, filterMonth, filterCategories, filterPriority, sortBy, hideCompleted])
 
   const handleImport = () => {
     fileInputRef.current?.click()
@@ -996,6 +1002,17 @@ function TaskList() {
               </button>
             )}
           </div>
+
+          {/* Hide Completed Toggle */}
+          <label className="flex items-center gap-2 bg-gray-100 dark:bg-gray-800 rounded-md p-1 px-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={hideCompleted}
+              onChange={(e) => setHideCompleted(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">Hide completed</span>
+          </label>
       </div>
 
       {/* Bulk Actions Toolbar */}
