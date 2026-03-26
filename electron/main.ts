@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const path = require('path')
+const Store = require('electron-store')
 
 const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged
 
@@ -29,6 +30,16 @@ function createWindow() {
     mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
   }
 }
+
+const store = new Store()
+
+ipcMain.handle('store:get', (_event: unknown, key: string) => {
+  return store.get(key)
+})
+
+ipcMain.handle('store:set', (_event: unknown, key: string, value: unknown) => {
+  store.set(key, value)
+})
 
 app.whenReady().then(() => {
   createWindow()

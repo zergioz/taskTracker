@@ -1,6 +1,6 @@
 {
   "name": "tr-tracker",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Lightweight task tracker with local storage",
   "main": "dist-electron/main.js",
   "author": "Sergio F. Rodriguez: your daddy!",
@@ -13,6 +13,7 @@
     "electron:build": "vite build && electron-builder"
   },
   "dependencies": {
+    "electron-store": "^8.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "wouter": "^3.9.0"
